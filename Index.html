@@ -1,0 +1,1234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CardsAgainstPeople</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Special+Elite&family=Roboto+Condensed:wght@300;400;700&display=swap');
+:root{--bk:#0a0a0a;--wh:#f5f5f0;--rd:#cc2222;--gd:#c9a84c;--gy:#2a2a2a;--lg:#888;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bk);color:var(--wh);font-family:'Roboto Condensed',sans-serif;min-height:100vh;overflow-x:hidden;}
+#loading{position:fixed;inset:0;background:var(--bk);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;gap:20px;}
+.load-logo{font-family:'Bebas Neue',sans-serif;font-size:3rem;letter-spacing:4px;}
+.load-logo span{color:var(--rd);}
+.spinner{width:40px;height:40px;border:4px solid #333;border-top-color:var(--gd);border-radius:50%;animation:spin 0.8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+#load-msg{color:var(--lg);font-size:0.9rem;letter-spacing:2px;text-align:center;padding:0 20px;}
+.screen{display:none;min-height:100vh;}
+.screen.active{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;}
+#title-screen{background:var(--bk);background-image:repeating-linear-gradient(0deg,transparent,transparent 49px,#1a1a1a 49px,#1a1a1a 50px),repeating-linear-gradient(90deg,transparent,transparent 49px,#1a1a1a 49px,#1a1a1a 50px);text-align:center;}
+.title-logo{font-family:'Bebas Neue',sans-serif;font-size:clamp(3rem,10vw,7rem);letter-spacing:4px;line-height:0.9;margin-bottom:10px;}
+.title-logo span{color:var(--rd);}
+.title-sub{font-family:'Special Elite',cursive;color:var(--gd);font-size:1.1rem;margin-bottom:50px;letter-spacing:2px;}
+.btn{background:var(--wh);color:var(--bk);border:none;padding:14px 40px;font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:3px;cursor:pointer;transition:all 0.15s;display:inline-block;margin:6px;-webkit-tap-highlight-color:transparent;}
+.btn:hover{background:var(--gd);}
+.btn:active{transform:scale(0.97);}
+.btn.dark{background:var(--gy);color:var(--wh);border:2px solid var(--wh);}
+.btn.red{background:var(--rd);color:var(--wh);}
+.btn.small{padding:8px 20px;font-size:1rem;}
+.panel{background:var(--gy);border:2px solid #444;padding:30px;width:100%;max-width:480px;}
+.panel h2{font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:3px;margin-bottom:25px;border-bottom:2px solid var(--gd);padding-bottom:10px;}
+.form-group{margin-bottom:18px;}
+.form-group label{display:block;font-size:0.85rem;letter-spacing:2px;text-transform:uppercase;color:var(--lg);margin-bottom:6px;}
+.form-group input,.form-group select{width:100%;background:var(--bk);border:2px solid #555;color:var(--wh);padding:10px 14px;font-family:'Roboto Condensed',sans-serif;font-size:1rem;outline:none;-webkit-appearance:none;border-radius:0;}
+.form-group input:focus,.form-group select:focus{border-color:var(--gd);}
+.form-group select option{background:var(--bk);}
+#lobby-screen{background:#0d0d0d;}
+.lobby-wrap{width:100%;max-width:700px;}
+.lobby-title{font-family:'Bebas Neue',sans-serif;font-size:2.5rem;letter-spacing:3px;border-bottom:3px solid var(--rd);padding-bottom:10px;margin-bottom:20px;}
+.room-code-display{background:var(--gy);border:2px solid var(--gd);padding:12px 20px;font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:8px;color:var(--gd);display:inline-block;margin-bottom:20px;}
+.player-list{list-style:none;}
+.player-list li{background:var(--gy);border-left:4px solid #444;padding:10px 16px;margin-bottom:6px;display:flex;align-items:center;gap:10px;font-size:1.1rem;}
+.player-list li.is-host{border-left-color:var(--gd);}
+.player-list li .pts{margin-left:auto;background:var(--bk);padding:3px 10px;font-size:0.85rem;color:var(--gd);}
+#game-screen{background:#0d0d0d;align-items:stretch;justify-content:flex-start;padding:0;min-height:100vh;}
+.game-layout{display:grid;grid-template-rows:auto 1fr auto;min-height:100vh;width:100%;}
+.game-top{background:var(--bk);border-bottom:3px solid var(--rd);padding:12px 20px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;}
+.game-name{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:3px;color:var(--rd);}
+.round-label{font-family:'Special Elite',cursive;color:var(--lg);font-size:0.9rem;}
+.scores-bar{margin-left:auto;display:flex;gap:12px;flex-wrap:wrap;}
+.score-chip{background:var(--gy);padding:4px 12px;font-size:0.85rem;border:1px solid #444;}
+.score-chip.winning{border-color:var(--gd);color:var(--gd);}
+.game-mid{display:grid;grid-template-columns:1fr 2fr;overflow:hidden;}
+.left-col{background:var(--bk);padding:30px;border-right:2px solid #222;display:flex;flex-direction:column;gap:20px;}
+.col-label{font-size:0.75rem;letter-spacing:3px;text-transform:uppercase;color:var(--lg);margin-bottom:5px;}
+.black-card{background:var(--bk);border:3px solid var(--wh);padding:24px;font-family:'Special Elite',cursive;font-size:1.15rem;line-height:1.6;min-height:160px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:6px 6px 0 #333;}
+.black-card .pick-label{margin-top:16px;font-size:0.75rem;letter-spacing:2px;color:var(--lg);}
+.right-col{padding:30px;overflow-y:auto;}
+.sub-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-top:12px;}
+.sub-card{background:var(--wh);color:var(--bk);padding:18px;font-family:'Special Elite',cursive;font-size:0.95rem;line-height:1.5;min-height:140px;cursor:pointer;border:3px solid transparent;transition:all 0.15s;box-shadow:4px 4px 0 #333;display:flex;flex-direction:column;justify-content:space-between;}
+.sub-card:active{transform:scale(0.97);}
+.sub-card.picked{border-color:var(--gd);background:#fffbe8;}
+.sub-card .who{font-size:0.75rem;color:#888;margin-top:10px;}
+.game-bottom{background:#111;border-top:3px solid #333;padding:16px 20px;}
+.hand-label{font-size:0.75rem;letter-spacing:3px;text-transform:uppercase;color:var(--lg);margin-bottom:12px;}
+.hand-row{display:flex;gap:10px;overflow-x:auto;padding-bottom:8px;-webkit-overflow-scrolling:touch;}
+.hand-card{background:var(--wh);color:var(--bk);padding:14px;font-family:'Special Elite',cursive;font-size:0.85rem;line-height:1.4;min-width:140px;max-width:160px;flex-shrink:0;cursor:pointer;border:3px solid transparent;transition:all 0.15s;box-shadow:3px 3px 0 #333;-webkit-tap-highlight-color:transparent;}
+.hand-card.chosen{border-color:var(--rd);transform:translateY(-8px);box-shadow:3px 11px 0 var(--rd);}
+.hand-card.locked{opacity:0.4;pointer-events:none;}
+.status-box{background:var(--gy);border:2px solid var(--gd);padding:14px 20px;font-family:'Special Elite',cursive;font-size:1.1rem;text-align:center;color:var(--gd);margin:10px 0;}
+.czar-box{background:rgba(204,34,34,0.1);border:1px solid var(--rd);padding:12px 16px;font-size:0.9rem;color:#ff6666;margin:10px 0;text-align:center;}
+#winner-screen{background:var(--bk);text-align:center;}
+.win-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(3rem,8vw,6rem);letter-spacing:4px;color:var(--gd);margin-bottom:10px;}
+.win-name{font-family:'Special Elite',cursive;font-size:2rem;color:var(--wh);margin-bottom:30px;}
+.final-list{background:var(--gy);border:2px solid #444;padding:20px;width:100%;max-width:400px;margin:0 auto 30px;}
+.final-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #444;font-size:1.1rem;}
+.final-row:last-child{border-bottom:none;}
+.final-row .fp{color:var(--gd);font-weight:bold;}
+#admin-screen{background:#0d0d0d;align-items:flex-start;padding:30px 20px;}
+.admin-wrap{width:100%;max-width:900px;}
+.admin-title{font-family:'Bebas Neue',sans-serif;font-size:3rem;letter-spacing:4px;color:var(--rd);margin-bottom:6px;}
+.admin-note{color:var(--lg);margin-bottom:30px;font-size:0.9rem;}
+.tab-bar{display:flex;gap:4px;margin-bottom:20px;flex-wrap:wrap;}
+.tab-btn{background:var(--gy);color:var(--lg);border:2px solid #444;padding:8px 20px;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:2px;cursor:pointer;}
+.tab-btn.active{background:var(--wh);color:var(--bk);border-color:var(--wh);}
+.tab-pane{display:none;}
+.tab-pane.active{display:block;}
+.card-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+@media(max-width:600px){.card-grid{grid-template-columns:1fr;}}
+.card-list-box{background:var(--gy);border:2px solid #444;padding:16px;max-height:500px;overflow-y:auto;}
+.card-list-box h3{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:2px;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #555;}
+.card-row{background:var(--bk);padding:8px 12px;margin-bottom:6px;font-size:0.9rem;display:flex;align-items:flex-start;gap:8px;}
+.card-row span{flex:1;line-height:1.4;}
+.del-btn{background:none;border:1px solid #555;color:var(--rd);cursor:pointer;padding:2px 8px;font-size:0.8rem;flex-shrink:0;}
+.add-row{margin-top:14px;display:flex;gap:8px;}
+.add-row textarea{flex:1;background:var(--bk);border:2px solid #555;color:var(--wh);padding:8px 12px;font-family:'Roboto Condensed',sans-serif;font-size:0.9rem;resize:none;height:60px;outline:none;border-radius:0;}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#222;border:2px solid var(--gd);padding:12px 22px;font-size:0.95rem;color:var(--gd);z-index:9000;border-radius:2px;animation:toastIn 3.5s forwards;pointer-events:none;max-width:90vw;text-align:center;white-space:normal;}
+.toast.bad{border-color:var(--rd);color:#ff8888;}
+@keyframes toastIn{0%{opacity:0;transform:translateX(-50%) translateY(10px)}12%{opacity:1;transform:translateX(-50%) translateY(0)}75%{opacity:1}100%{opacity:0}}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:999;}
+.modal{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--bk);border:4px solid var(--gd);padding:28px 32px;text-align:center;z-index:1000;box-shadow:0 0 40px rgba(201,168,76,0.4);min-width:min(320px,90vw);max-width:90vw;}
+.modal h3{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:3px;color:var(--gd);margin-bottom:10px;}
+.modal .big{font-family:'Special Elite',cursive;font-size:1.8rem;color:var(--wh);}
+.modal .sub{margin-top:10px;font-family:'Special Elite',cursive;font-size:1.1rem;color:var(--lg);}
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-track{background:var(--bk);}
+::-webkit-scrollbar-thumb{background:#444;}
+@media(max-width:768px){.game-mid{grid-template-columns:1fr;}.left-col{border-right:none;border-bottom:2px solid #222;padding:20px;}.right-col{padding:20px;}}
+</style>
+</head>
+<body>
+
+<div id="loading">
+  <div class="load-logo">Cards<span>Against</span>People</div>
+  <div class="spinner"></div>
+  <p id="load-msg">Loading...</p>
+</div>
+
+<div id="title-screen" class="screen">
+  <div class="title-logo">Cards<br><span>Against</span><br>People</div>
+  <div class="title-sub">A party game for horrible people</div>
+  <div>
+    <button class="btn" onclick="CAP.goCreate()">Create Room</button>
+    <button class="btn dark" onclick="CAP.goJoin()">Join Room</button>
+  </div>
+  <div style="margin-top:20px">
+    <button class="btn small dark" onclick="CAP.goAdmin()">Admin Settings</button>
+  </div>
+</div>
+
+<div id="create-screen" class="screen">
+  <div class="panel">
+    <h2>Create Room</h2>
+    <div class="form-group"><label>Your Name</label><input type="text" id="inp-cname" placeholder="Enter your name" maxlength="20" autocomplete="off"></div>
+    <div class="form-group"><label>Max Players</label>
+      <select id="inp-cmax">
+        <option value="5">5 Players</option><option value="10" selected>10 Players</option>
+        <option value="15">15 Players</option><option value="20">20 Players</option>
+      </select></div>
+    <div class="form-group"><label>Points to Win</label>
+      <select id="inp-cpts">
+        <option value="5">5 Points</option><option value="8" selected>8 Points</option>
+        <option value="10">10 Points</option><option value="15">15 Points</option>
+      </select></div>
+    <div class="form-group"><label>Cards Per Hand</label>
+      <select id="inp-chand"><option value="7">7 Cards</option><option value="10" selected>10 Cards</option></select></div>
+    <button class="btn" style="width:100%" onclick="CAP.doCreate()">Create Room</button>
+    <button class="btn dark small" style="width:100%;margin-top:8px" onclick="CAP.showScreen('title-screen')">Back</button>
+  </div>
+</div>
+
+<div id="join-screen" class="screen">
+  <div class="panel">
+    <h2>Join Room</h2>
+    <div class="form-group"><label>Your Name</label><input type="text" id="inp-jname" placeholder="Enter your name" maxlength="20" autocomplete="off"></div>
+    <div class="form-group"><label>Room Code</label>
+      <input type="text" id="inp-jcode" placeholder="4-letter code" maxlength="4" style="text-transform:uppercase;letter-spacing:6px;font-size:1.4rem" autocomplete="off"></div>
+    <button class="btn" style="width:100%" onclick="CAP.doJoin()">Join Room</button>
+    <button class="btn dark small" style="width:100%;margin-top:8px" onclick="CAP.showScreen('title-screen')">Back</button>
+  </div>
+</div>
+
+<div id="lobby-screen" class="screen">
+  <div class="lobby-wrap">
+    <div class="lobby-title">Game Lobby</div>
+    <div style="margin-bottom:16px">
+      <div class="col-label">Room Code - Share with friends</div>
+      <div class="room-code-display" id="lobby-code">----</div>
+    </div>
+    <div id="lobby-info" style="margin-bottom:16px;color:var(--gd);font-size:0.9rem"></div>
+    <ul class="player-list" id="lobby-players"></ul>
+    <div style="margin-top:24px;display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn" id="btn-start" onclick="CAP.startGame()" style="display:none">Start Game</button>
+      <button class="btn dark" onclick="CAP.leaveGame()">Leave</button>
+    </div>
+    <div id="lobby-wait" class="status-box" style="display:none">Waiting for host to start...</div>
+  </div>
+</div>
+
+<div id="game-screen" class="screen">
+  <div class="game-layout">
+    <div class="game-top">
+      <span class="game-name">CardsAgainstPeople</span>
+      <span class="round-label" id="round-label">Round 1</span>
+      <span class="round-label" id="czar-label" style="color:var(--rd)"></span>
+      <div class="scores-bar" id="scores-bar"></div>
+    </div>
+    <div class="game-mid">
+      <div class="left-col">
+        <div>
+          <div class="col-label">Black Card</div>
+          <div class="black-card">
+            <div id="black-card-text">...</div>
+            <div class="pick-label" id="pick-label"></div>
+          </div>
+        </div>
+        <div>
+          <div class="status-box" id="status-msg">...</div>
+        </div>
+        <div id="submit-area" style="display:none">
+          <button class="btn" style="width:100%" onclick="CAP.submitCards()">Submit Cards</button>
+        </div>
+        <div id="czar-area" style="display:none">
+          <div class="czar-box">You are the Card Czar - tap the winning card!</div>
+        </div>
+      </div>
+      <div class="right-col">
+        <div class="col-label" id="subs-label">Submitted Cards</div>
+        <div class="sub-grid" id="subs-grid"></div>
+      </div>
+    </div>
+    <div class="game-bottom">
+      <div class="hand-label">Your Hand - Tap to Select</div>
+      <div class="hand-row" id="hand-row"></div>
+    </div>
+  </div>
+</div>
+
+<div id="winner-screen" class="screen">
+  <div class="win-title">GAME OVER</div>
+  <div class="win-name" id="winner-name"></div>
+  <div class="final-list" id="final-scores"></div>
+  <button class="btn" onclick="CAP.showScreen('title-screen')">Play Again</button>
+</div>
+
+<div id="admin-screen" class="screen">
+  <div class="admin-wrap">
+    <div class="admin-title">Admin Panel</div>
+    <div class="admin-note">Cards and password are saved permanently on this device.</div>
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="CAP.switchTab('tab-black',this)">Black Cards (<span id="black-count">0</span>)</button>
+      <button class="tab-btn" onclick="CAP.switchTab('tab-white',this)">White Cards (<span id="white-count">0</span>)</button>
+      <button class="tab-btn" onclick="CAP.switchTab('tab-settings',this)">Settings</button>
+    </div>
+    <div id="tab-black" class="tab-pane active">
+      <div class="card-grid">
+        <div class="card-list-box"><h3 style="color:#ccc">Black Cards</h3><div id="black-list"></div></div>
+        <div>
+          <div class="panel" style="max-width:100%">
+            <h2 style="font-size:1.4rem">Add Black Card</h2>
+            <p style="color:var(--lg);font-size:0.85rem;margin-bottom:12px">Use ______ for blanks.</p>
+            <div class="add-row"><textarea id="new-black" placeholder="e.g. I never understood ______ until I met ______."></textarea></div>
+            <button class="btn small" style="margin-top:8px;width:100%" onclick="CAP.addBlack()">Add Card</button>
+          </div>
+          <div style="margin-top:16px"><button class="btn red small" onclick="CAP.resetCards()">Reset All Cards to Defaults</button></div>
+        </div>
+      </div>
+    </div>
+    <div id="tab-white" class="tab-pane">
+      <div class="card-grid">
+        <div class="card-list-box"><h3 style="color:#ccc">White Cards</h3><div id="white-list"></div></div>
+        <div>
+          <div class="panel" style="max-width:100%">
+            <h2 style="font-size:1.4rem">Add White Card</h2>
+            <div class="add-row"><textarea id="new-white" placeholder="e.g. Accidentally calling your teacher Mom"></textarea></div>
+            <button class="btn small" style="margin-top:8px;width:100%" onclick="CAP.addWhite()">Add Card</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="tab-settings" class="tab-pane">
+      <div class="panel" style="max-width:100%">
+        <h2>Change Password</h2>
+        <div class="form-group"><label>New Password</label><input type="password" id="new-pw1" placeholder="Enter new password"></div>
+        <div class="form-group"><label>Confirm Password</label><input type="password" id="new-pw2" placeholder="Confirm new password"></div>
+        <button class="btn small" onclick="CAP.changePw()">Save Password</button>
+        <hr style="border-color:#444;margin:20px 0">
+        <p style="color:var(--lg);font-size:0.9rem;line-height:1.7">Cards and password are stored in your browser's local storage. They stay permanently even after closing the browser. To use updated cards in a game, start a new room after making changes.</p>
+      </div>
+    </div>
+    <div style="margin-top:20px"><button class="btn dark" onclick="CAP.showScreen('title-screen')">Back to Game</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay" style="display:none"></div>
+<div class="modal" id="round-modal" style="display:none">
+  <h3>Round Winner!</h3>
+  <div class="big" id="modal-winner"></div>
+  <div class="sub" id="modal-card"></div>
+  <button class="btn small" style="margin-top:16px" onclick="CAP.nextRound()">Continue</button>
+</div>
+
+<div class="overlay" id="admin-overlay" style="display:none" onclick="CAP.closeAdminLogin()"></div>
+<div class="modal" id="admin-modal" style="display:none">
+  <h3>Admin Access</h3>
+  <div style="margin:14px 0">
+    <input type="password" id="admin-pw-input" placeholder="Enter admin password"
+      style="width:100%;background:#111;border:2px solid #555;color:white;padding:10px;font-size:1rem;outline:none;border-radius:0;font-family:'Roboto Condensed',sans-serif"
+      onkeydown="if(event.key==='Enter')CAP.checkAdminPw()">
+  </div>
+  <div id="admin-pw-error" style="color:var(--rd);font-size:0.85rem;margin-bottom:10px;display:none">Wrong password!</div>
+  <div style="display:flex;gap:8px;justify-content:center">
+    <button class="btn small" onclick="CAP.checkAdminPw()">Enter</button>
+    <button class="btn dark small" onclick="CAP.closeAdminLogin()">Cancel</button>
+  </div>
+</div>
+
+<script>
+var CAP = (function() {
+
+  // ==================================================================
+  // SUPABASE CONFIG
+  // ==================================================================
+  var SB_URL = 'https://tivthpqiwlgdeqmigrwn.supabase.co';
+  var SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpdnRocHFpd2xnZGVxbWlncnduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4NDM2MTcsImV4cCI6MjA5MTQxOTYxN30.Pt-IqQHwpgQgfd-IR6qfJzsT_sfJ9qqz0t-0OHNrZ5M';
+
+  // Supabase REST helpers
+  function sbGet(code, cb) {
+    fetch(SB_URL + '/rest/v1/rooms?code=eq.' + code + '&select=data', {
+      headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(rows) {
+      if (!rows || rows.length === 0) { cb(null, null); return; }
+      cb(null, rows[0].data);
+    })
+    .catch(function(e) { cb(e, null); });
+  }
+
+  function sbSet(code, data, cb) {
+    // Upsert the room row
+    fetch(SB_URL + '/rest/v1/rooms', {
+      method: 'POST',
+      headers: {
+        'apikey': SB_KEY,
+        'Authorization': 'Bearer ' + SB_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=merge-duplicates'
+      },
+      body: JSON.stringify({ code: code, data: data })
+    })
+    .then(function(r) {
+      if (r.ok || r.status === 201 || r.status === 200) { if (cb) cb(null); }
+      else { r.text().then(function(t) { if (cb) cb(new Error(t)); }); }
+    })
+    .catch(function(e) { if (cb) cb(e); });
+  }
+
+  // ==================================================================
+  // DEFAULT CARDS
+  // ==================================================================
+  var DEFAULT_BLACK = [
+    "______ + ______ = ______.",
+    "______ is a slippery slope that leads to ______.",
+    "______: kid-tested, mother-approved.",
+    "______. High five, bro.",
+    "A romantic, candlelit dinner would be incomplete without ______.",
+    "A successful job interview begins with a firm handshake and ends with ______.",
+    "And the Academy Award for ______ goes to ______.",
+    "And today's soup is Cream of ______.",
+    "Arby's: We Have ______.",
+    "As reparations for slavery, all African Americans will receive ______.",
+    "As the mom of five rambunctious boys, I'm no stranger to ______.",
+    "Attention Target shoppers. Unfortunately, we will be closing early due to ______.",
+    "Brought to you by Bud Light, the Official Beer of ______.",
+    "But before I kill you, Mr. Bond, I must show you ______.",
+    "Check me out, yo! I call this dance move \"______\".",
+    "Coming to Broadway this season, ______: The Musical.",
+    "Daddy, why is mommy crying?",
+    "Don't forget! Beginning this week, Casual Friday will officially become \"______ Friday.\"",
+    "Dude, do not go in that bathroom. There's ______ in there.",
+    "Dudes. I just found out that ______ is ______.",
+    "During high school, I never really fit in until I found ______ club.",
+    "During his midlife crisis, my dad got really into ______.",
+    "During sex, I like to think about ______.",
+    "For my next trick, I will pull ______ out of ______.",
+    "Fun tip! When your man asks you to go down on him, try surprising him with ______ instead.",
+    "Hey guys, welcome to Chili's! Would you like to start the night off right with ______?",
+    "Holy shit! My video of ______ has ten million views!",
+    "How did I lose my virginity?",
+    "Howdy, neighbor! Couldn't help but notice you struggling with ______. Need a hand?",
+    "Hulu's new reality show features twelve hot singles living with ______.",
+    "I drink to forget ______.",
+    "I never truly understood ______ until I encountered ______.",
+    "I'm going on a cleanse this week. Nothing but kale juice and ______.",
+    "I'm no doctor, but I'm pretty sure what you're suffering from is called \"______\".",
+    "I'm sorry, Mrs. Brown, but I couldn't complete my homework because of ______.",
+    "I'm sorry, sir, but we don't allow ______ at the country club.",
+    "If at first, you don't succeed, try ______.",
+    "If you can't be with the one you love, love ______.",
+    "Instead of coal, Santa now gives the bad children ______.",
+    "Introducing the amazing superhero/sidekick duo! It's ______ and ______!",
+    "Introducing X-Treme Baseball! It's like baseball, but with ______!",
+    "Just once, I'd like to hear you say \"Thanks, Mom. Thanks for ______\".",
+    "Kids, I don't need drugs to get high. I'm high on ______.",
+    "Lifetime presents \"______: the Story of ______\".",
+    "Lovin' you is easy 'cause you're ______.",
+    "Make a haiku.",
+    "Man, this is bullshit. Fuck ______.",
+    "Mitch McConnell can't cum without ______.",
+    "Mr. and Mrs. Diaz, we called you in because we're concerned about Cynthia. Are you aware that your daughter is ______?",
+    "My favorite sex position is called \"______-style\".",
+    "My fellow Americans: Before this decade is out, we will have ______ on the moon!",
+    "Next from J.K. Rowling: Harry Potter and the Chamber of ______.",
+    "Next on ESPN2: The World Series of ______.",
+    "Not to brag, but I've been called the \"Picasso of ______\".",
+    "Oh no! Siri, how do I fix ______?",
+    "Old MacDonald had ______. E-I-E-I-O.",
+    "Parents are concerned about a new YouTube craze known as the \"______ Challenge\".",
+    "Premiering tonight: NBC's new heartfelt drama, This Is ______.",
+    "\"Step 1: ______. Step 2: ______. Step 3: Profit.\"",
+    "Summer lovin', had me a blast. ______, happened so fast.",
+    "That's right, I killed ______. How, you ask? ______.",
+    "The class field trip was completely ruined by ______.",
+    "The Five Stages of Grief: denial, anger, bargaining, ______, acceptance.",
+    "The new Chevy Tahoe. With the power and space to take ______ everywhere you go.",
+    "The secret to a lasting marriage is communication, communication, and ______.",
+    "This is your captain speaking. Fasten your seatbelts and prepare for ______.",
+    "Today on Maury: \"Help! My son is ______!\"",
+    "Uh, hey guys, I know this was my idea, but I'm having serious doubts about ______.",
+    "Well if ______ is a crime, then lock me up!",
+    "What brought the orgy to a grinding halt?",
+    "What ended my last relationship?",
+    "What made my first kiss so awkward?",
+    "What would grandma find disturbing, yet oddly charming?",
+    "What's my secret power?",
+    "What's that sound?",
+    "What's the best metaphor for our political system?",
+    "What's the most emo?",
+    "What's there a ton of in heaven?",
+    "When I pooped, what came out of my butt?",
+    "White people like ______.",
+    "WHOOO! God damn I love ______!",
+    "Why am I sticky?",
+    "Why can't I sleep at night?",
+    "Why do I hurt all over?",
+    "Why is Brett so sweaty?",
+    "Your dreams are one click away! Learn more at ______.com.",
+    "______ is the new ______.",
+    "In 2030, scientists discovered that ______ causes ______.",
+    "Donald Trump's new executive order bans ______.",
+    "Elon Musk's next big project: ______.",
+    "The latest TikTok trend involves ______.",
+    "Kim Kardashian's newest brand is now selling ______.",
+    "Kanye West's next album is called \"______\".",
+    "Scientists confirm: ______ is what gives Florida Man his power.",
+    "Jeff Bezos spent his billions on ______.",
+    "Breaking: Congress votes to ban ______.",
+    "Marjorie Taylor Greene's newest conspiracy theory involves ______.",
+    "In the year 3000, archaeologists will be baffled by ______.",
+    "What's inside Area 51? ______.",
+    "Something your father would do that you wouldn't be surprised about?",
+    "99 problems but a ______ ain't one.",
+    "Why was my vacation canceled?",
+    "You know what, I really hate ______."
+  ];
+
+  var DEFAULT_WHITE = [
+    "50 mg of Zoloft daily.","50,000 volts straight to the nipples.","A big black dick.",
+    "A bird that shits human turds.","A bitch slap.","A Bop It.","A brain tumor.",
+    "A burrito that's just sour cream.","A disappointing birthday party.","A disappointing salad.",
+    "A DIY vasectomy.","A drone strike.","A fetus.","A Fleshlight.","A fuck-ton of almonds.",
+    "A good sniff.","A good, strong gorilla.","A homoerotic volleyball montage.",
+    "A little boy who won't shut the fuck up about dinosaurs.","A live studio audience.",
+    "A loser like you.","A micropenis.","A micropig wearing a tiny raincoat and booties.",
+    "A middle-aged man on roller skates.","A mistake.",
+    "A pangender octopus who roams the cosmos in search of love.","A passionate Latino lover.",
+    "A plunger to the face.","A positive attitude!","A really cool hat.",
+    "A sad fat dragon with no friends.","A sorry excuse for a father.","A stray pube.",
+    "A Super Soaker full of cat pee.","A supportive touch on the lower back.",
+    "A sweaty, panting leather daddy.","A three-way with my wife and Shaquille O'Neal.",
+    "A toilet.","A windmill full of corpses.",
+    "Active listening.","Actually getting shot, for real.","Adderall.","Agriculture.","AIDS.",
+    "Alcoholism.","Alexandria Ocasio-Cortez.","All the dudes I've fucked.",
+    "An all-white jury.","An AR-15 assault rifle.","An empowered woman.",
+    "An endless stream of diarrhea.","An erection that lasts longer than four hours.",
+    "An inability to form meaningful relationships.","An old guy who's almost dead.",
+    "An older man with a lot of money.","An unwanted pregnancy.",
+    "Assaulting a police officer.","Auschwitz.","Authentic Mexican cuisine.",
+    "Balls.","Barack Obama.","Barely making $25,000 a year.",
+    "Being a dick to children.","Being a motherfucking sorcerer.","Being a woman.",
+    "Being fat and stupid.","Being on fire.","Being paralyzed from the neck down.",
+    "Big ol' floppy titties.","Birth control.","Black Jesus.","Black people.",
+    "Body image issues.","Brown people.","Burning in Hell.",
+    "Calling the cops on an innocent Black man.",
+    "Casually suggesting a threesome.","Changing a person's mind with logic and facts.",
+    "Child labor.","Chinese state propaganda.","Cocaine for lunch.",
+    "Committing suicide.","Committing treason.","Consensual sex.",
+    "Converting to Islam.","Corporate America.","Costco.","COVID-19.",
+    "Crippling debt.","Critical race theory.","Crucifixion.","Cyanide.",
+    "Daddy going away forever.","Daddy issues.","Daniel Radcliffe's delicious asshole.",
+    "Danny DeVito.","Dark and mysterious forces beyond our control.","Dead birds everywhere.",
+    "Dead parents.","Depression.","Dick fingers.","Dick pics.",
+    "Diversity, equity, and inclusion.","Doin' it in the butt.","Doing crimes.",
+    "Doing drugs with my kids.","Drinking alone.","Dwayne The Rock Johnson.","Dying.",
+    "Emotions.","Erectile dysfunction.","Establishing dominance.","Ethnic cleansing.",
+    "Exchanging sex for career advancement.","Existing as a person of color.",
+    "Explaining the difference between sex and gender.","Extremely tight pants.","Fake tits.",
+    "Farting and walking away.","Fellowship in Christ.","Fisting.",
+    "Former President George W. Bush.","Fox News.","Friction.","Gandalf.",
+    "Gay conversion therapy.","Geese.","Gender dysphoria.",
+    "Generally having no idea what's going on.","Genuine human connection.",
+    "German dungeon porn.","Getting an abortion.",
+    "Getting crushed between Serena Williams' thighs.","Getting crushed by a vending machine.",
+    "Getting fingered.",
+    "Getting married, having a few kids, buying some stuff, retiring to Florida, and dying.",
+    "Getting really high.","Getting serial killed.","Ghosts.","Girls.",
+    "Giving birth in prison.","Giving birth to the Antichrist.","Gloryholes.","God.",
+    "GoGurt.","Grandma.","Half-assed foreplay.",
+    "Harry Potter and all his sexy little friends.","Having a stroke.",
+    "Having big dreams but no realistic way to achieve them.","Heteronormativity.","Hope.",
+    "Horse meat.","Hospice care.","How amazing it is to be on mushrooms.",
+    "Huffing spray paint.","Illegal immigrants.","Incest.","Irritable bowel syndrome.",
+    "Italians.","Jazz.","Joe Biden.","Judge Judy.","Kamala Harris.","Kanye West.","Karen.",
+    "Laughing over champagne flutes while the poor freeze to death outside.","Liberals.",
+    "Licking things to claim them as your own.","Like, a lot of homeless people.",
+    "Listening to her problems without trying to solve them.","Literally begging to die.",
+    "Lunchables.","Mansplaining.","Masturbating.","Men.","Menstrual rage.","Meth.",
+    "Moderate-to-severe joint pain.","More elephant cock than I bargained for.",
+    "Mouth herpes.","Mr. Clean.","Mufasa's death scene.","Multiple stab wounds.","Murder.",
+    "My abusive boyfriend who really isn't so bad once you get to know him.",
+    "My cat that died.","My cheating son-of-a-bitch husband.","My ex-wife.",
+    "My fat daughter.","My gay best friend.","My good bra.","My machete.",
+    "My neck, my back, my pussy, and my crack.","My pet scorpion, Tina.",
+    "My ugly face and bad personality.","My vagina.",
+    "Nachos for the table.","Nasty shit, like real sick stuff.","Natural selection.",
+    "Nazis.","Necrophilia.","Nicolas Cage.","Nipple blades.",
+    "Nobody giving a shit about anything anymore.","Not reciprocating oral sex.",
+    "Object permanence.","One titty hanging out.","Opposable thumbs.",
+    "Out-of-control teenage blowjob parties.","Pedophiles.","Peeing a little bit.",
+    "Penis breath.","Penis envy.","Police brutality.","Poor people.","Potato.","Poverty.",
+    "Prescription painkillers.","Preteens.","Pretending to be a dentist.",
+    "Pretending to be straight.","Pretending to care.","PTSD.","Puberty.","Pulling out.",
+    "Putin.","Putting children in cages.","Queefing.","Racism.","Rectangles.","Republicans.",
+    "Salvation.","Satan.","Saudi oil money.","Saying 'I love you.'","Science.",
+    "Seeing Grandma naked.","Seeing my father cry.","Seething with quiet resentment.",
+    "Self-loathing.","Selling crack to children.","Seven dead and three in critical condition.",
+    "Sex with animals.","SHAME!","Shutting the fuck up.","Slamming a dunk.",
+    "Slaughtering innocent civilians.","Smegma.","Solving problems with violence.",
+    "Spirit Airlines.","Squirting.","Stalin.","Stockholm Syndrome.","Swamp ass.",
+    "Taylor Swift.","Tech bros.","Tentacle porn.","The Amish.","The arrival of the pizza.",
+    "Three dicks at the same time.","The Big Bang.","The Blood of Christ.",
+    "The Confederate flag.","The cool, refreshing taste of Pepsi.","The death penalty.",
+    "The entire Mormon Tabernacle Choir.","The gays.","The Grinch.","The Hamburglar.",
+    "The Holy Bible.","The Joe Rogan Experience.","The KKK.","The Kool-Aid Man.",
+    "The magic of live theatre.","The mere concept of Applebee's.",
+    "The milk that comes out of a person.","The milkman.","The miracle of childbirth.",
+    "The mixing of the races.","The opioid epidemic.","The past.","The Patriarchy.","The Pope.",
+    "The screams...the terrible screams.","The South.","The Three-Fifths Compromise.",
+    "The tiger that killed my father.","The total collapse of the global financial system.",
+    "The ugliest boy in town.","The Underground Railroad.",
+    "The vanishing line between truth and misinformation.",
+    "The violation of our most basic human rights.","The Wendy's Spicy Chicken Sandwich.",
+    "The white man.","Therapy.","These hoes.","This week's mass shooting.",
+    "Three consecutive seconds of happiness.","Three ounces of clean urine.",
+    "Throwing a virgin into a volcano.","Toxic masculinity.","Trump.","Twenty bucks.",
+    "Twenty cheerleaders laughing at your tiny penis.",
+    "Unlimited soup, salad, and breadsticks.","Using a condom.","Viagra.",
+    "Vigorous jazz hands.","Voter fraud.","Waking up half-naked in a Denny's parking lot.",
+    "Wet dreams.","Whatever a McRib is made of.","White people.","White privilege.",
+    "Whooping your ass at Mario Kart.","Wizard music.","Women of color.","Women's suffrage.",
+    "Working in an Amazon warehouse.",
+    "Donald Trump's Twitter account.","Elon Musk buying everything.",
+    "Jeff Bezos in space.","A strongly-worded tweet from @POTUS.","The MyPillow guy.",
+    "Hunter Biden's laptop.","Florida Man.","That one guy who won't shut up about Bitcoin.",
+    "Getting fact-checked by Facebook.","Being banned from Twitter.",
+    "Eating Tide Pods.","A Karen demanding to speak to the manager.","Anti-vaxxers.",
+    "Storming the Capitol in a Viking hat.","Thoughts and prayers.",
+    "Sending an email that should've been a text.",
+    "Leaving your camera on while going to the bathroom on a work call.",
+    "A participation trophy.","The guy who brings a guitar to the party.","Microaggressions.",
+    "Going viral for the wrong reason.","Being ratio'd on Twitter.",
+    "A LinkedIn influencer.","Crying in the work bathroom.",
+    "An unhinged Facebook rant from a distant relative.","Getting fired over a Zoom call.",
+    "The metaverse.","A crypto bro explaining blockchain.","ChatGPT writing your breakup text.",
+    "The quiet part out loud.",
+    "Pornhub.","Race Science.",
+    "P Diddy's credit card transaction history.",
+    "Epstein's massage room on March 14, 2005.",
+    "Kanye West's opinion on Jews.",
+    "That one teacher you had in middle school who would never shut the fuck up.",
+    "Just being a really bitchy dyke.",
+    "Yelling 'Free Palestine' at a Jewish funeral.",
+    "The wrong guy being blessed with a 9 inch dick.",
+    "Being Bi curious at 12 with the average republican dad.",
+    "Watching gay porn with your HB.",
+    "Libtard.",
+    "Sexcalling with someone on Omegle.",
+    "Listening to Kid Rock with your really woke friend.",
+    "Beating your meat to Kevin G.",
+    "Bitch."
+  ];
+
+  // ==================================================================
+  // SUPABASE SETTINGS - cards and password synced across all devices
+  // ==================================================================
+  function sbGetSetting(key, cb) {
+    fetch(SB_URL + '/rest/v1/settings?key=eq.' + key + '&select=value', {
+      headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(rows) {
+      if (!rows || rows.length === 0) { cb(null, null); return; }
+      cb(null, rows[0].value);
+    })
+    .catch(function(e) { cb(e, null); });
+  }
+
+  function sbSetSetting(key, value, cb) {
+    fetch(SB_URL + '/rest/v1/settings', {
+      method: 'POST',
+      headers: {
+        'apikey': SB_KEY,
+        'Authorization': 'Bearer ' + SB_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=merge-duplicates'
+      },
+      body: JSON.stringify({ key: key, value: value })
+    })
+    .then(function(r) {
+      if (r.ok || r.status === 200 || r.status === 201) { if (cb) cb(null); }
+      else { r.text().then(function(t) { if (cb) cb(new Error(t)); }); }
+    })
+    .catch(function(e) { if (cb) cb(e); });
+  }
+
+  function saveCards(cb) {
+    sbSetSetting('cards', { black: cards.black, white: cards.white }, function(err) {
+      if (err) { toast('Save error: ' + err.message, true); }
+      else { if (cb) cb(); }
+    });
+  }
+
+  function savePwRemote(pw, cb) {
+    sbSetSetting('password', { pw: pw }, function(err) {
+      if (err) { toast('Save error: ' + err.message, true); }
+      else { if (cb) cb(); }
+    });
+  }
+
+  // ==================================================================
+  // STATE
+  // ==================================================================
+  var cards = { black: DEFAULT_BLACK.slice(), white: DEFAULT_WHITE.slice() };
+  var adminPass = 'admin123';
+  var myId = null;
+  var roomCode = null;
+  var localDecks = null;   // kept in memory only, never synced
+  var gameState = null;
+  var pollTimer = null;
+  var selectedCards = [];
+
+  // ==================================================================
+  // UTILITIES
+  // ==================================================================
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
+    document.getElementById(id).classList.add('active');
+  }
+  function showLoading(msg) {
+    document.getElementById('load-msg').textContent = msg || 'Loading...';
+    document.getElementById('loading').style.display = 'flex';
+  }
+  function hideLoading() {
+    document.getElementById('loading').style.display = 'none';
+  }
+  function toast(msg, bad) {
+    var old = document.querySelector('.toast');
+    if (old) old.remove();
+    var el = document.createElement('div');
+    el.className = 'toast' + (bad ? ' bad' : '');
+    el.textContent = msg;
+    document.body.appendChild(el);
+    setTimeout(function() { if (el.parentNode) el.remove(); }, 3800);
+  }
+  function randId() { return Math.random().toString(36).substr(2, 9); }
+  function randCode() {
+    var c = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', r = '';
+    for (var i = 0; i < 4; i++) r += c[Math.floor(Math.random() * c.length)];
+    return r;
+  }
+  function shuffle(arr) {
+    var a = arr.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+  function countBlanks(s) { return (s.match(/______/g) || []).length; }
+
+  // ==================================================================
+  // GAME STATE SYNC - lightweight object saved to Supabase
+  // Decks are NEVER saved to Supabase - too large. Only current card
+  // names (hands, current black card) are synced.
+  // ==================================================================
+  function buildSyncState() {
+    return {
+      roomCode:         gameState.roomCode,
+      phase:            gameState.phase,
+      maxPlayers:       gameState.maxPlayers,
+      pointsToWin:      gameState.pointsToWin,
+      handSize:         gameState.handSize,
+      round:            gameState.round,
+      czarIndex:        gameState.czarIndex,
+      currentBlackCard: gameState.currentBlackCard || '',
+      players:          gameState.players,
+      submissions:      gameState.submissions,
+      roundWinner:      gameState.roundWinner || null
+    };
+  }
+
+  function saveRoom(cb) {
+    if (!gameState || !roomCode) { if (cb) cb(null); return; }
+    sbSet(roomCode, buildSyncState(), function(err) {
+      if (err) { toast('Sync error: ' + err.message, true); }
+      if (cb) cb(err);
+    });
+  }
+
+  function startPolling(code) {
+    stopPolling();
+    pollTimer = setInterval(function() {
+      sbGet(code, function(err, data) {
+        if (err || !data) return;
+        // Merge incoming state, preserve local deck refs and our hand
+        var prevMe = gameState && gameState.players
+          ? gameState.players.find(function(p) { return p.id === myId; })
+          : null;
+        gameState = data;
+        // Restore local deck references
+        if (localDecks) {
+          gameState.blackDeck = localDecks.blackDeck;
+          gameState.whiteDeck = localDecks.whiteDeck;
+        }
+        // Protect our hand from being overwritten mid-turn
+        var me = gameState.players
+          ? gameState.players.find(function(p) { return p.id === myId; })
+          : null;
+        if (me && prevMe && !me.hasSubmitted
+            && prevMe.hand && prevMe.hand.length > (me.hand || []).length) {
+          me.hand = prevMe.hand;
+        }
+        var cur = document.querySelector('.screen.active');
+        var curId = cur ? cur.id : '';
+        if (gameState.phase === 'lobby' && curId === 'lobby-screen') {
+          renderLobby(); return;
+        }
+        if ((gameState.phase === 'playing' || gameState.phase === 'round_end')
+            && curId === 'lobby-screen') {
+          enterGame(); return;
+        }
+        if ((gameState.phase === 'playing' || gameState.phase === 'round_end')
+            && curId === 'game-screen') {
+          if (gameState.phase === 'round_end' && gameState.roundWinner
+              && document.getElementById('round-modal').style.display !== 'block') {
+            showRoundWinner(gameState.roundWinner.playerName, gameState.roundWinner.cards);
+          }
+          renderGame(); return;
+        }
+        if (gameState.phase === 'game_over') { showGameOver(); }
+      });
+    }, 2000);
+  }
+
+  function stopPolling() {
+    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+  }
+
+  // ==================================================================
+  // ROOM CREATION & JOINING
+  // ==================================================================
+  function goCreate() { showScreen('create-screen'); }
+  function goJoin()   { showScreen('join-screen'); }
+
+  function doCreate() {
+    var name = document.getElementById('inp-cname').value.trim();
+    if (!name) { toast('Enter your name!', true); return; }
+    var max  = parseInt(document.getElementById('inp-cmax').value);
+    var pts  = parseInt(document.getElementById('inp-cpts').value);
+    var hs   = parseInt(document.getElementById('inp-chand').value);
+
+    showLoading('Creating room...');
+
+    var bd   = shuffle(cards.black);
+    var wd   = shuffle(cards.white);
+    var hand = wd.splice(0, hs);
+    localDecks = { blackDeck: bd, whiteDeck: wd };
+
+    myId     = randId();
+    roomCode = randCode();
+
+    gameState = {
+      roomCode:        roomCode,
+      phase:           'lobby',
+      maxPlayers:      max,
+      pointsToWin:     pts,
+      handSize:        hs,
+      round:           0,
+      czarIndex:       0,
+      currentBlackCard:'',
+      blackDeck:       bd,
+      whiteDeck:       wd,
+      players:         [{ id: myId, name: name, score: 0, isHost: true,
+                          hand: hand, submitted: [], hasSubmitted: false }],
+      submissions:     [],
+      roundWinner:     null
+    };
+
+    saveRoom(function(err) {
+      hideLoading();
+      if (err) { toast('Could not create room: ' + err.message, true); return; }
+      startPolling(roomCode);
+      showLobby();
+    });
+  }
+
+  function doJoin() {
+    var name = document.getElementById('inp-jname').value.trim();
+    var code = document.getElementById('inp-jcode').value.trim().toUpperCase();
+    if (!name) { toast('Enter your name!', true); return; }
+    if (!code || code.length !== 4) { toast('Enter a 4-character room code!', true); return; }
+
+    showLoading('Finding room...');
+
+    sbGet(code, function(err, data) {
+      hideLoading();
+      if (err)   { toast('Connection error: ' + err.message, true); return; }
+      if (!data) { toast('Room "' + code + '" not found. Check the code and try again.', true); return; }
+      if (data.phase !== 'lobby') { toast('This game has already started!', true); return; }
+      if (data.players.length >= data.maxPlayers) { toast('This room is full!', true); return; }
+      if (data.players.some(function(p) { return p.name.toLowerCase() === name.toLowerCase(); })) {
+        toast('That name is already taken!', true); return;
+      }
+
+      myId     = randId();
+      roomCode = code;
+
+      // Joiners build their own local deck for hand refills
+      var wd   = shuffle(cards.white);
+      var hand = wd.splice(0, data.handSize);
+      localDecks = { blackDeck: shuffle(cards.black), whiteDeck: wd };
+
+      gameState = data;
+      gameState.blackDeck = localDecks.blackDeck;
+      gameState.whiteDeck = localDecks.whiteDeck;
+      gameState.players.push({
+        id: myId, name: name, score: 0, isHost: false,
+        hand: hand, submitted: [], hasSubmitted: false
+      });
+
+      showLoading('Joining room...');
+      saveRoom(function(err2) {
+        hideLoading();
+        if (err2) { toast('Could not join room: ' + err2.message, true); return; }
+        startPolling(code);
+        showLobby();
+      });
+    });
+  }
+
+  function showLobby() {
+    showScreen('lobby-screen');
+    document.getElementById('lobby-code').textContent = gameState.roomCode;
+    renderLobby();
+  }
+
+  function renderLobby() {
+    if (!gameState) return;
+    var me = gameState.players.find(function(p) { return p.id === myId; });
+    document.getElementById('lobby-players').innerHTML = gameState.players.map(function(p) {
+      return '<li class="' + (p.isHost ? 'is-host' : '') + '">'
+        + (p.isHost ? '[HOST] ' : '') + p.name
+        + (p.id === myId ? ' (you)' : '')
+        + '<span class="pts">' + p.score + ' pts</span></li>';
+    }).join('');
+    document.getElementById('lobby-info').textContent =
+      gameState.players.length + '/' + gameState.maxPlayers + ' players - '
+      + gameState.pointsToWin + ' pts to win';
+    var sb = document.getElementById('btn-start');
+    var wb = document.getElementById('lobby-wait');
+    if (me && me.isHost) {
+      sb.style.display = gameState.players.length >= 2 ? 'inline-block' : 'none';
+      wb.style.display = 'none';
+    } else {
+      sb.style.display = 'none';
+      wb.style.display = 'block';
+    }
+  }
+
+  function startGame() {
+    gameState.phase    = 'playing';
+    gameState.round    = 1;
+    gameState.czarIndex = 0;
+    dealBlackCard();
+    saveRoom(function() { enterGame(); });
+  }
+
+  function enterGame() { showScreen('game-screen'); renderGame(); }
+
+  function dealBlackCard() {
+    if (!localDecks || !localDecks.blackDeck.length) {
+      if (!localDecks) localDecks = {};
+      localDecks.blackDeck = shuffle(cards.black);
+    }
+    gameState.currentBlackCard = localDecks.blackDeck.shift();
+    gameState.submissions  = [];
+    gameState.roundWinner  = null;
+    gameState.players.forEach(function(p) {
+      p.hasSubmitted = false;
+      p.submitted    = [];
+    });
+  }
+
+  function leaveGame() {
+    stopPolling();
+    if (gameState && roomCode) {
+      gameState.players = gameState.players.filter(function(p) { return p.id !== myId; });
+      if (gameState.players.length && !gameState.players.find(function(p) { return p.isHost; })) {
+        gameState.players[0].isHost = true;
+      }
+      saveRoom(null);
+    }
+    gameState = null; myId = null; roomCode = null; localDecks = null; selectedCards = [];
+    showScreen('title-screen');
+  }
+
+  // ==================================================================
+  // GAME RENDERING
+  // ==================================================================
+  function renderGame() {
+    if (!gameState || !myId) return;
+    var me = gameState.players.find(function(p) { return p.id === myId; });
+    if (!me) return;
+    var czar    = gameState.players[gameState.czarIndex % gameState.players.length];
+    var isCzar  = czar && czar.id === myId;
+    var pick    = countBlanks(gameState.currentBlackCard || '') || 1;
+    var nonCzar = gameState.players.filter(function(p) { return p.id !== czar.id; });
+    var allIn   = nonCzar.length > 0 && nonCzar.every(function(p) { return p.hasSubmitted; });
+
+    document.getElementById('round-label').textContent =
+      'Round ' + gameState.round + ' - ' + gameState.pointsToWin + ' pts to win';
+    document.getElementById('czar-label').textContent =
+      czar ? 'Czar: ' + czar.name + (isCzar ? ' (you!)' : '') : '';
+    document.getElementById('black-card-text').textContent =
+      gameState.currentBlackCard || '...';
+    document.getElementById('pick-label').textContent =
+      pick > 1 ? 'PICK ' + pick : '';
+    document.getElementById('scores-bar').innerHTML =
+      gameState.players.slice().sort(function(a, b) { return b.score - a.score; })
+        .map(function(p, i) {
+          return '<span class="score-chip' + (i === 0 && p.score > 0 ? ' winning' : '') + '">'
+            + p.name + ': ' + p.score + '</span>';
+        }).join('');
+
+    var status  = document.getElementById('status-msg');
+    var subArea = document.getElementById('submit-area');
+    var czArea  = document.getElementById('czar-area');
+    var subLbl  = document.getElementById('subs-label');
+    subArea.style.display = 'none';
+    czArea.style.display  = 'none';
+
+    if (gameState.phase === 'round_end' || allIn) {
+      subLbl.textContent  = isCzar ? 'Tap a card to pick the winner!' : 'Waiting for Card Czar...';
+      status.textContent  = isCzar ? 'Pick your favorite answer!' : 'Card Czar is deciding...';
+      if (isCzar) czArea.style.display = 'block';
+      renderSubs(true, isCzar && !gameState.roundWinner);
+    } else if (isCzar) {
+      var c1 = gameState.players.filter(function(p) { return p.id !== czar.id && p.hasSubmitted; }).length;
+      subLbl.textContent = 'Waiting for players to submit...';
+      status.textContent = 'Waiting... ' + c1 + '/' + (gameState.players.length - 1) + ' submitted';
+      renderSubs(false, false);
+    } else if (me.hasSubmitted) {
+      var c2 = gameState.players.filter(function(p) { return p.id !== czar.id && p.hasSubmitted; }).length;
+      status.textContent = 'Submitted! ' + c2 + '/' + (gameState.players.length - 1) + ' done';
+      renderSubs(false, false);
+    } else {
+      subLbl.textContent   = pick > 1 ? 'Select ' + pick + ' cards' : 'Select a card';
+      status.textContent   = 'Choose ' + (pick > 1 ? pick + ' cards' : 'a card') + ' from your hand';
+      subArea.style.display = selectedCards.length === pick ? 'block' : 'none';
+    }
+    renderHand(me, isCzar || me.hasSubmitted);
+  }
+
+  function renderHand(me, locked) {
+    document.getElementById('hand-row').innerHTML = (me.hand || []).map(function(c, i) {
+      return '<div class="hand-card'
+        + (selectedCards.indexOf(i) > -1 ? ' chosen' : '')
+        + (locked ? ' locked' : '')
+        + '" onclick="CAP.toggleCard(' + i + ')">' + c + '</div>';
+    }).join('');
+  }
+
+  function toggleCard(i) {
+    if (!gameState) return;
+    var me = gameState.players.find(function(p) { return p.id === myId; });
+    if (!me || me.hasSubmitted) return;
+    var czar = gameState.players[gameState.czarIndex % gameState.players.length];
+    if (czar && czar.id === myId) return;
+    var pick = countBlanks(gameState.currentBlackCard || '') || 1;
+    var pos  = selectedCards.indexOf(i);
+    if (pos > -1) { selectedCards.splice(pos, 1); }
+    else { if (selectedCards.length >= pick) selectedCards.shift(); selectedCards.push(i); }
+    document.getElementById('submit-area').style.display =
+      selectedCards.length === pick ? 'block' : 'none';
+    renderGame();
+  }
+
+  function submitCards() {
+    if (!gameState) return;
+    var me = gameState.players.find(function(p) { return p.id === myId; });
+    if (!me || me.hasSubmitted) return;
+    var pick = countBlanks(gameState.currentBlackCard || '') || 1;
+    if (selectedCards.length !== pick) return;
+    var chosen = selectedCards.map(function(i) { return me.hand[i]; });
+    me.submitted    = chosen;
+    me.hasSubmitted = true;
+    me.hand = me.hand.filter(function(_, idx) { return selectedCards.indexOf(idx) < 0; });
+    gameState.submissions.push({ playerId: myId, cards: chosen });
+    selectedCards = [];
+    saveRoom(function() { renderGame(); });
+  }
+
+  function renderSubs(revealed, czarCanPick) {
+    var grid = document.getElementById('subs-grid');
+    var czar = gameState.players[gameState.czarIndex % gameState.players.length];
+    if (!revealed || !gameState.submissions.length) {
+      var cnt   = gameState.players.filter(function(p) { return p.id !== czar.id && p.hasSubmitted; }).length;
+      var total = gameState.players.length - 1;
+      grid.innerHTML = '<div style="color:var(--lg);padding:20px;grid-column:1/-1">'
+        + cnt + '/' + total + ' players have submitted...'
+        + '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">'
+        + Array(cnt).fill('<div class="sub-card" style="cursor:default;opacity:0.3;min-height:80px;width:140px"></div>').join('')
+        + '</div></div>';
+      return;
+    }
+    var subs = shuffle(gameState.submissions.slice());
+    grid.innerHTML = subs.map(function(sub) {
+      var isWin = gameState.roundWinner && gameState.roundWinner.playerId === sub.playerId;
+      var pl    = gameState.players.find(function(p) { return p.id === sub.playerId; });
+      return '<div class="sub-card' + (isWin ? ' picked' : '') + '"'
+        + ' onclick="' + (czarCanPick ? 'CAP.pickWinner(\'' + sub.playerId + '\')' : '') + '"'
+        + ' style="cursor:' + (czarCanPick ? 'pointer' : 'default') + '">'
+        + '<div>' + sub.cards.join(' / ') + '</div>'
+        + (isWin && pl ? '<div class="who">Winner: ' + pl.name + '</div>' : '')
+        + '</div>';
+    }).join('');
+  }
+
+  function pickWinner(wid) {
+    if (!gameState) return;
+    var czar = gameState.players[gameState.czarIndex % gameState.players.length];
+    if (!czar || czar.id !== myId || gameState.roundWinner) return;
+    var w = gameState.players.find(function(p) { return p.id === wid; });
+    if (!w) return;
+    w.score += 1;
+    var ws = gameState.submissions.find(function(s) { return s.playerId === wid; });
+    gameState.roundWinner = { playerId: wid, playerName: w.name, cards: ws ? ws.cards : [] };
+    gameState.phase = 'round_end';
+    saveRoom(function() {
+      showRoundWinner(w.name, ws ? ws.cards : []);
+      renderGame();
+    });
+  }
+
+  function showRoundWinner(name, cardList) {
+    document.getElementById('overlay').style.display       = 'block';
+    document.getElementById('round-modal').style.display   = 'block';
+    document.getElementById('modal-winner').textContent    = name + ' wins!';
+    document.getElementById('modal-card').textContent      = cardList.join(' / ');
+  }
+
+  function nextRound() {
+    document.getElementById('overlay').style.display     = 'none';
+    document.getElementById('round-modal').style.display = 'none';
+    if (!gameState) return;
+    var gw = gameState.players.find(function(p) { return p.score >= gameState.pointsToWin; });
+    if (gw) { gameState.phase = 'game_over'; saveRoom(function() { showGameOver(); }); return; }
+    // Winner becomes new czar
+    if (gameState.roundWinner) {
+      var idx = gameState.players.findIndex(function(p) { return p.id === gameState.roundWinner.playerId; });
+      if (idx > -1) gameState.czarIndex = idx;
+    }
+    // Refill hands
+    gameState.players.forEach(function(p) {
+      var need = gameState.handSize - p.hand.length;
+      for (var i = 0; i < need; i++) {
+        if (!localDecks || !localDecks.whiteDeck.length) {
+          if (!localDecks) localDecks = {};
+          localDecks.whiteDeck = shuffle(cards.white);
+        }
+        p.hand.push(localDecks.whiteDeck.shift());
+      }
+      p.hasSubmitted = false;
+      p.submitted    = [];
+    });
+    gameState.round      += 1;
+    gameState.phase       = 'playing';
+    gameState.roundWinner = null;
+    selectedCards         = [];
+    dealBlackCard();
+    saveRoom(function() { renderGame(); });
+  }
+
+  function showGameOver() {
+    stopPolling();
+    showScreen('winner-screen');
+    var sorted = gameState.players.slice().sort(function(a, b) { return b.score - a.score; });
+    document.getElementById('winner-name').textContent = sorted[0].name + ' wins the game!';
+    document.getElementById('final-scores').innerHTML = sorted.map(function(p, i) {
+      return '<div class="final-row"><span>'
+        + (['1st', '2nd', '3rd'][i] || '   ') + ' ' + p.name
+        + '</span><span class="fp">' + p.score + ' pts</span></div>';
+    }).join('');
+  }
+
+  // ==================================================================
+  // ADMIN
+  // ==================================================================
+  function goAdmin() {
+    document.getElementById('admin-overlay').style.display = 'block';
+    document.getElementById('admin-modal').style.display   = 'block';
+    document.getElementById('admin-pw-input').value        = '';
+    document.getElementById('admin-pw-error').style.display = 'none';
+  }
+  function closeAdminLogin() {
+    document.getElementById('admin-overlay').style.display = 'none';
+    document.getElementById('admin-modal').style.display   = 'none';
+  }
+  function checkAdminPw() {
+    var pw = document.getElementById('admin-pw-input').value;
+    if (pw === adminPass) { closeAdminLogin(); openAdmin(); }
+    else { document.getElementById('admin-pw-error').style.display = 'block'; }
+  }
+  function openAdmin() {
+    showScreen('admin-screen');
+    renderAdmin();
+  }
+  function switchTab(id, btn) {
+    document.querySelectorAll('.tab-pane').forEach(function(p) { p.classList.remove('active'); });
+    document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+    document.getElementById(id).classList.add('active');
+    btn.classList.add('active');
+  }
+  function renderAdmin() {
+    document.getElementById('black-count').textContent = cards.black.length;
+    document.getElementById('white-count').textContent = cards.white.length;
+    document.getElementById('black-list').innerHTML = cards.black.map(function(c, i) {
+      return '<div class="card-row"><span>' + c + '</span>'
+        + '<button class="del-btn" onclick="CAP.delCard(\'black\',' + i + ')">X</button></div>';
+    }).join('');
+    document.getElementById('white-list').innerHTML = cards.white.map(function(c, i) {
+      return '<div class="card-row"><span>' + c + '</span>'
+        + '<button class="del-btn" onclick="CAP.delCard(\'white\',' + i + ')">X</button></div>';
+    }).join('');
+  }
+  function delCard(type, i) {
+    cards[type].splice(i, 1);
+    saveCards(function() { toast('Card deleted and saved!'); renderAdmin(); });
+  }
+  function addBlack() {
+    var t = document.getElementById('new-black').value.trim();
+    if (!t) return;
+    cards.black.push(t);
+    saveCards(function() {
+      document.getElementById('new-black').value = '';
+      toast('Black card added and saved!');
+      renderAdmin();
+    });
+  }
+  function addWhite() {
+    var t = document.getElementById('new-white').value.trim();
+    if (!t) return;
+    cards.white.push(t);
+    saveCards(function() {
+      document.getElementById('new-white').value = '';
+      toast('White card added and saved!');
+      renderAdmin();
+    });
+  }
+  function resetCards() {
+    if (!confirm('Reset ALL cards to defaults?')) return;
+    cards = { black: DEFAULT_BLACK.slice(), white: DEFAULT_WHITE.slice() };
+    saveCards(function() { toast('Cards reset to defaults!'); renderAdmin(); });
+  }
+  function changePw() {
+    var p1 = document.getElementById('new-pw1').value.trim();
+    var p2 = document.getElementById('new-pw2').value.trim();
+    if (!p1) { toast('Enter a new password!', true); return; }
+    if (p1 !== p2) { toast('Passwords do not match!', true); return; }
+    savePwRemote(p1, function() {
+      adminPass = p1;
+      document.getElementById('new-pw1').value = '';
+      document.getElementById('new-pw2').value = '';
+      toast('Password saved! Works on all devices now.');
+    });
+  }
+
+  // ==================================================================
+  // BOOT - load cards and password from Supabase on startup
+  // ==================================================================
+  showLoading('Loading settings...');
+  var bootDone = 0;
+  function bootCheck() {
+    bootDone++;
+    if (bootDone >= 2) { hideLoading(); showScreen('title-screen'); }
+  }
+  sbGetSetting('cards', function(err, val) {
+    if (!err && val && val.black && val.white) {
+      cards = { black: val.black, white: val.white };
+    }
+    bootCheck();
+  });
+  sbGetSetting('password', function(err, val) {
+    if (!err && val && val.pw) { adminPass = val.pw; }
+    bootCheck();
+  });
+
+  return {
+    showScreen:     showScreen,
+    goCreate:       goCreate,
+    goJoin:         goJoin,
+    doCreate:       doCreate,
+    doJoin:         doJoin,
+    startGame:      startGame,
+    leaveGame:      leaveGame,
+    toggleCard:     toggleCard,
+    submitCards:    submitCards,
+    pickWinner:     pickWinner,
+    nextRound:      nextRound,
+    goAdmin:        goAdmin,
+    closeAdminLogin:closeAdminLogin,
+    checkAdminPw:   checkAdminPw,
+    switchTab:      switchTab,
+    delCard:        delCard,
+    addBlack:       addBlack,
+    addWhite:       addWhite,
+    resetCards:     resetCards,
+    changePw:       changePw
+  };
+})();
+</script>
+</body>
+</html>
